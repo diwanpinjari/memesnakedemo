@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-pixel: 'Silkscreen', monospace;
+    --font-lcd: 'VT323', monospace;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #111317;
+    color: #e2e8f0;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+}
+
+.font-pixel {
+  font-family: var(--font-pixel);
+}
+
+.font-lcd {
+  font-family: var(--font-lcd);
+}
+
+/* Subtle dot-matrix LCD scanline texture */
+.lcd-pixel-overlay {
+  background-image:
+    linear-gradient(rgba(15, 56, 15, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 56, 15, 0.05) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+/* Tactile Nokia button shadow and press feel */
+.nokia-key {
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.25),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.55),
+    0 2px 4px rgba(0, 0, 0, 0.65);
+  transition: transform 75ms ease, box-shadow 75ms ease, filter 75ms ease;
+}
+
+.nokia-key:active,
+.nokia-key-pressed {
+  transform: translateY(1.5px) scale(0.97);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.7),
+    0 0 1px rgba(0, 0, 0, 0.5);
+  filter: brightness(0.92);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nokia-key {
+    transition: none;
+  }
+}

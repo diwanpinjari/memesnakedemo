@@ -1,0 +1,6 @@
+{
+  "name": "MemeSnake 3310",
+  "description": "A retro Nokia 3310-style Snake game with a Telugu meme twist, spicy power-ups, and synthesized 8-bit audio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
