@@ -6,18 +6,21 @@ import { NokiaScreen } from './components/NokiaScreen';
 import {
   ActiveEffect,
   CLASSIC_FOOD_DEFINITION,
+  DeathReason,
   Direction,
   FloatingText,
   FOOD_DEFINITIONS,
   FoodDefinition,
   FoodItem,
-  GAME_OVER_QUOTES,
   GameMode,
   GameState,
   GRID_COLS,
   GRID_ROWS,
   HIGH_SCORE_STORAGE_KEY,
+  MemeReaction,
+  MemeSituation,
   MUTE_STORAGE_KEY,
+  pickMemeReaction,
   Point,
   WallMode,
 } from './types/game';
@@ -140,8 +143,10 @@ export default function App() {
   const [showStrongGrid, setShowStrongGrid] = useState<boolean>(true);
   const [activeEffects, setActiveEffects] = useState<ActiveEffect[]>([]);
   const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
-  const [statusMessage, setStatusMessage] = useState<string>('READY FOR TIFFIN');
-  const [gameOverQuote, setGameOverQuote] = useState<string>(GAME_OVER_QUOTES[0]);
+  const [memeReaction, setMemeReaction] = useState<MemeReaction>(() =>
+    pickMemeReaction('READY')
+  );
+  const [statusMessage, setStatusMessage] = useState<string>('READY FOR ACTION');
   const [isNewHighScore, setIsNewHighScore] = useState<boolean>(false);
   const [pressedKey, setPressedKey] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState<number>(() => performance.now());
@@ -155,6 +160,7 @@ export default function App() {
   const foodRef = useRef<FoodItem>(food);
   const scoreRef = useRef<number>(score);
   const highScoreRef = useRef<number>(highScore);
+  const isNewHighScoreRef = useRef<boolean>(false);
   const wallModeRef = useRef<WallMode>(wallMode);
   const activeEffectsRef = useRef<ActiveEffect[]>(activeEffects);
   const floatingIdRef = useRef<number>(1);
@@ -193,12 +199,14 @@ export default function App() {
     const mode = gameModeRef.current;
     const freshFood = spawnFood(freshSnake, mode);
     const now = performance.now();
+    const readyReaction = pickMemeReaction('READY');
 
     snakeRef.current = freshSnake;
     directionRef.current = INITIAL_DIRECTION;
     directionQueueRef.current = [];
     foodRef.current = freshFood;
     scoreRef.current = 0;
+    isNewHighScoreRef.current = false;
     activeEffectsRef.current = [];
     lastStepTimeRef.current = now;
 
@@ -209,7 +217,10 @@ export default function App() {
     setActiveEffects([]);
     setFloatingTexts([]);
     setIsNewHighScore(false);
-    setStatusMessage(mode === 'CLASSIC' ? 'CLASSIC NOKIA SNAKE' : 'GAME ON! EAT UP!');
+    setMemeReaction(readyReaction);
+    setStatusMessage(
+      mode === 'CLASSIC' ? 'CLASSIC NOKIA SNAKE' : readyReaction.dialogue.toUpperCase()
+    );
     setGameState('PLAYING');
     gameStateRef.current = 'PLAYING';
     retroAudio.playStart();
@@ -233,15 +244,35 @@ export default function App() {
     );
     foodRef.current = swappedFood;
     setFood(swappedFood);
-    setStatusMessage(
-      nextMode === 'CLASSIC' ? 'CLASSIC NOKIA SNAKE' : 'MEME MODE ACTIVATED!'
-    );
+    if (nextMode === 'MEME') {
+      const readyReaction = pickMemeReaction('READY');
+      setMemeReaction(readyReaction);
+      setStatusMessage(readyReaction.dialogue.toUpperCase());
+    } else {
+      setStatusMessage('CLASSIC NOKIA SNAKE');
+    }
   }, []);
 
-  const triggerGameOver = useCallback(() => {
-    const randomQuote =
-      GAME_OVER_QUOTES[Math.floor(Math.random() * GAME_OVER_QUOTES.length)];
-    setGameOverQuote(randomQuote);
+  const triggerGameOver = useCallback((reason: DeathReason, now: number) => {
+    const currentEffects = activeEffectsRef.current.filter((e) => e.expiresAt > now);
+    let situation: MemeSituation;
+
+    if (isNewHighScoreRef.current) {
+      situation = 'CRASH_HIGH_SCORE';
+    } else if (scoreRef.current <= 2) {
+      situation = 'CRASH_EARLY';
+    } else if (currentEffects.some((e) => e.type === 'REVERSE')) {
+      situation = 'CRASH_REVERSE';
+    } else if (currentEffects.some((e) => e.type === 'SPRINT')) {
+      situation = 'CRASH_SPRINT';
+    } else if (reason === 'SELF') {
+      situation = 'CRASH_SELF';
+    } else {
+      situation = 'CRASH_WALL';
+    }
+
+    const reaction = pickMemeReaction(situation);
+    setMemeReaction(reaction);
     setGameState('GAME_OVER');
     gameStateRef.current = 'GAME_OVER';
     retroAudio.playGameOver();
@@ -249,6 +280,8 @@ export default function App() {
 
   const togglePause = useCallback(() => {
     if (gameStateRef.current === 'PLAYING') {
+      const pauseReaction = pickMemeReaction('PAUSED');
+      setMemeReaction(pauseReaction);
       setGameState('PAUSED');
       gameStateRef.current = 'PAUSED';
     } else if (gameStateRef.current === 'PAUSED') {
@@ -305,10 +338,10 @@ export default function App() {
     retroAudio.playKeyBeep(pitchOffset);
     if (gameStateRef.current !== 'PLAYING' && ['1', '3', '7', '9'].includes(digit)) {
       const jokes: Record<string, string> = {
-        '1': 'PRESS 5 TO START!',
-        '3': 'SPICY MIRCHI AWAITS',
-        '7': 'BIRYANI = 2X POINTS',
-        '9': 'BEWARE HARD EXAMS!',
+        '1': 'PRESS 5 — START GAME!',
+        '3': 'GUNTUR MIRCHI = TURBO PANIC',
+        '7': '2AM BIRYANI = 2X POINTS',
+        '9': 'OUT OF SYLLABUS = REVERSE',
       };
       setStatusMessage(jokes[digit] ?? 'MEMESNAKE 3310');
     }
@@ -318,7 +351,6 @@ export default function App() {
     (rawDir: Direction) => {
       flashPressedKey(rawDir);
 
-      // Allow starting directly with a direction key from Title Menu? Better to keep explicit Start or start if playing:
       if (gameStateRef.current !== 'PLAYING') return;
 
       const now = performance.now();
@@ -452,7 +484,7 @@ export default function App() {
         nextY = (nextY + GRID_ROWS) % GRID_ROWS;
       } else {
         if (nextX < 0 || nextX >= GRID_COLS || nextY < 0 || nextY >= GRID_ROWS) {
-          triggerGameOver();
+          triggerGameOver('WALL', now);
           return;
         }
       }
@@ -465,7 +497,7 @@ export default function App() {
       const bodyToCheck = willEat ? currentSnake : currentSnake.slice(0, -1);
       const hitSelf = bodyToCheck.some((seg) => seg.x === nextX && seg.y === nextY);
       if (hitSelf) {
-        triggerGameOver();
+        triggerGameOver('SELF', now);
         return;
       }
 
@@ -497,6 +529,7 @@ export default function App() {
 
         if (nextScore > highScoreRef.current) {
           highScoreRef.current = nextScore;
+          isNewHighScoreRef.current = true;
           setHighScore(nextScore);
           setIsNewHighScore(true);
           try {
@@ -542,17 +575,28 @@ export default function App() {
             `+${pointsEarned} ${effectLabelMap[def.effectType]}`,
             now
           );
-          setStatusMessage(def.memeQuip.toUpperCase());
+
+          const situationMap: Record<NonNullable<typeof def.effectType>, MemeSituation> = {
+            SPRINT: 'SPRINT',
+            REVERSE: 'REVERSE',
+            DOUBLE_POINTS: 'DOUBLE_POINTS',
+            SLOW_MO: 'SLOW_MO',
+          };
+          const reaction = pickMemeReaction(situationMap[def.effectType]);
+          setMemeReaction(reaction);
+          setStatusMessage(reaction.dialogue.toUpperCase());
+        } else if (nextLevel > prevLevel) {
+          retroAudio.playSpeedUp();
+          addFloatingText(nextX, nextY, `+${pointsEarned} LV${nextLevel}!`, now);
+          const reaction = pickMemeReaction('LEVEL_UP');
+          setMemeReaction(reaction);
+          setStatusMessage(`SPEED UP! LEVEL ${nextLevel}`);
         } else {
-          if (nextLevel > prevLevel) {
-            retroAudio.playSpeedUp();
-            addFloatingText(nextX, nextY, `+${pointsEarned} LV${nextLevel}!`, now);
-            setStatusMessage(`SPEED UP! LEVEL ${nextLevel}`);
-          } else {
-            retroAudio.playEat();
-            addFloatingText(nextX, nextY, `+${pointsEarned}`, now);
-            setStatusMessage(def.memeQuip.toUpperCase());
-          }
+          retroAudio.playEat();
+          addFloatingText(nextX, nextY, `+${pointsEarned}`, now);
+          const reaction = pickMemeReaction('PULIHORA');
+          setMemeReaction(reaction);
+          setStatusMessage(reaction.dialogue.toUpperCase());
         }
 
         // Spawn next food item according to active GameMode
@@ -633,7 +677,7 @@ export default function App() {
             activeEffects={activeEffects}
             floatingTexts={floatingTexts}
             statusMessage={statusMessage}
-            gameOverQuote={gameOverQuote}
+            memeReaction={memeReaction}
             isNewHighScore={isNewHighScore}
             nowMs={nowMs}
             onStartGame={startNewRun}
@@ -652,6 +696,7 @@ export default function App() {
           wallMode={wallMode}
           muted={muted}
           showStrongGrid={showStrongGrid}
+          memeReaction={memeReaction}
           onToggleMute={handleToggleMute}
           onToggleWallMode={handleToggleWallMode}
           onToggleGrid={handleToggleGrid}

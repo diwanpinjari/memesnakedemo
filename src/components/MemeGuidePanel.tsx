@@ -1,6 +1,13 @@
 import React from 'react';
 import { Volume2, VolumeX, RotateCcw, Grid3X3, Shield, Repeat } from 'lucide-react';
-import { FOOD_DEFINITIONS, FoodKind, GameMode, WallMode } from '../types/game';
+import {
+  FOOD_DEFINITIONS,
+  FoodKind,
+  GameMode,
+  MemeReaction,
+  WallMode,
+} from '../types/game';
+import { MEME_IMAGE_PATHS } from '../types/memeImages';
 
 interface MemeGuidePanelProps {
   gameMode: GameMode;
@@ -10,6 +17,7 @@ interface MemeGuidePanelProps {
   wallMode: WallMode;
   muted: boolean;
   showStrongGrid: boolean;
+  memeReaction: MemeReaction;
   onToggleMute: () => void;
   onToggleWallMode: () => void;
   onToggleGrid: () => void;
@@ -32,6 +40,7 @@ export const MemeGuidePanel: React.FC<MemeGuidePanelProps> = ({
   wallMode,
   muted,
   showStrongGrid,
+  memeReaction,
   onToggleMute,
   onToggleWallMode,
   onToggleGrid,
@@ -40,9 +49,9 @@ export const MemeGuidePanel: React.FC<MemeGuidePanelProps> = ({
   const isClassic = gameMode === 'CLASSIC';
 
   return (
-    <aside className="w-full max-w-[440px] space-y-6 text-slate-200">
+    <aside className="w-full max-w-[440px] space-y-5 text-slate-200">
       {/* Title & Clean Intro */}
-      <div className="border-b border-slate-800 pb-5">
+      <div className="border-b border-slate-800 pb-4">
         <p className={`text-xs font-medium tracking-wide ${isClassic ? 'text-white' : 'text-[#9bbc0f]'}`}>
           {isClassic ? 'Nokia 3310 Arcade · Classic B&W Mode' : 'Nokia 3310 Arcade · Telugu Meme Edition'}
         </p>
@@ -52,12 +61,12 @@ export const MemeGuidePanel: React.FC<MemeGuidePanelProps> = ({
         <p className="mt-2 text-sm leading-relaxed text-slate-400">
           {isClassic
             ? 'Pure black-and-white pixel Snake with standard food pellets, authentic 8-bit square-wave beeps, and progressive speed every 5 points.'
-            : 'Classic monochrome pixel Snake with spicy power-ups, inverted exam chaos, and synthesized 8-bit chiptune beeps. Speed ramps up every 5 points.'}
+            : 'Retro pixel Snake with Guntur Mirchi speed panic, out-of-syllabus reverse chaos, 2AM Biryani buffs, and live situation meme reactions.'}
         </p>
       </div>
 
       {/* Live Scoreboard Strip */}
-      <div className="grid grid-cols-3 gap-4 border-b border-slate-800 pb-5">
+      <div className="grid grid-cols-3 gap-4 border-b border-slate-800 pb-4">
         <div>
           <p className="text-xs text-slate-400">Score</p>
           <p className="mt-1 font-pixel text-xl font-bold tabular-nums text-white">
@@ -78,8 +87,28 @@ export const MemeGuidePanel: React.FC<MemeGuidePanelProps> = ({
         </div>
       </div>
 
+      {/* Live Situational Meme Reaction Card */}
+      {!isClassic && (
+        <div className="flex items-center gap-3.5 rounded-xl border border-[#9bbc0f]/35 bg-[#171b22] p-3 shadow-md">
+          <img
+            src={MEME_IMAGE_PATHS[memeReaction.imageKey]}
+            alt={memeReaction.badge}
+            className="h-20 w-20 shrink-0 rounded-lg border border-[#9bbc0f]/50 bg-[#0e1116] object-cover"
+            style={{ imageRendering: 'pixelated' }}
+          />
+          <div className="min-w-0 space-y-1.5">
+            <span className="inline-block rounded bg-[#9bbc0f] px-2 py-0.5 font-pixel text-[9px] font-bold tracking-wide text-[#0f380f]">
+              {memeReaction.badge}
+            </span>
+            <p className="text-sm font-semibold leading-snug text-white">
+              &ldquo;{memeReaction.dialogue}&rdquo;
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Quick Hardware Preferences */}
-      <div className="space-y-3 border-b border-slate-800 pb-5">
+      <div className="space-y-3 border-b border-slate-800 pb-4">
         <h2 className="text-sm font-semibold text-white">Arcade Controls</h2>
         <div className="flex flex-wrap gap-2">
           <button
@@ -162,7 +191,7 @@ export const MemeGuidePanel: React.FC<MemeGuidePanelProps> = ({
             {ORDERED_FOODS.map((kind) => {
               const item = FOOD_DEFINITIONS[kind];
               return (
-                <div key={kind} className="flex items-start justify-between gap-3 py-2.5">
+                <div key={kind} className="flex items-start justify-between gap-3 py-2">
                   <div className="flex items-start gap-2.5">
                     <span className="text-lg leading-none pt-0.5" aria-hidden="true">
                       {item.emoji}

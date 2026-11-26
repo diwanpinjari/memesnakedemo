@@ -9,9 +9,11 @@ import {
   GameState,
   GRID_COLS,
   GRID_ROWS,
+  MemeReaction,
   Point,
   WallMode,
 } from '../types/game';
+import { MEME_IMAGE_PATHS } from '../types/memeImages';
 
 interface NokiaScreenProps {
   gameState: GameState;
@@ -28,7 +30,7 @@ interface NokiaScreenProps {
   activeEffects: ActiveEffect[];
   floatingTexts: FloatingText[];
   statusMessage: string;
-  gameOverQuote: string;
+  memeReaction: MemeReaction;
   isNewHighScore: boolean;
   nowMs: number;
   onStartGame: () => void;
@@ -56,7 +58,7 @@ export const NokiaScreen: React.FC<NokiaScreenProps> = ({
   activeEffects,
   floatingTexts,
   statusMessage,
-  gameOverQuote,
+  memeReaction,
   isNewHighScore,
   nowMs,
   onStartGame,
@@ -262,6 +264,8 @@ export const NokiaScreen: React.FC<NokiaScreenProps> = ({
     ? Math.min(100, Math.max(0, ((primaryEffect.expiresAt - nowMs) / primaryEffect.durationMs) * 100))
     : 0;
 
+  const reactionImageSrc = MEME_IMAGE_PATHS[memeReaction.imageKey];
+
   return (
     <div
       className={`relative w-full rounded-[6px] border-[2px] overflow-hidden select-none ${
@@ -357,23 +361,23 @@ export const NokiaScreen: React.FC<NokiaScreenProps> = ({
         {/* TITLE MENU OVERLAY */}
         {gameState === 'TITLE_MENU' && (
           <div
-            className={`absolute inset-1 z-30 flex flex-col items-center justify-between p-3 text-center ${
+            className={`absolute inset-1 z-30 flex flex-col items-center justify-between p-2.5 text-center ${
               isClassic ? 'bg-white/95 text-black' : 'bg-[#9bbc0f]/95 text-[#0f380f]'
             }`}
           >
             <div
-              className={`w-full border-b pb-1.5 ${
+              className={`w-full border-b pb-1 ${
                 isClassic ? 'border-black/40' : 'border-[#0f380f]/35'
               }`}
             >
               <p
-                className={`font-pixel text-[9px] tracking-wider ${
+                className={`font-pixel text-[8px] tracking-wider ${
                   isClassic ? 'text-black/70' : 'text-[#306230]'
                 }`}
               >
                 {isClassic ? 'CLASSIC B&W EDITION' : 'NOKIA 3310 EDITION'}
               </p>
-              <h2 className="mt-0.5 font-pixel text-base font-bold tracking-tight">
+              <h2 className="mt-0.5 font-pixel text-sm font-bold tracking-tight">
                 {isClassic ? 'SNAKE 3310' : 'MEMESNAKE'}
               </h2>
             </div>
@@ -391,16 +395,27 @@ export const NokiaScreen: React.FC<NokiaScreenProps> = ({
                 </p>
               </div>
             ) : (
-              <div className="my-auto space-y-1.5 font-lcd text-[15px] leading-tight text-[#0f380f]">
-                <p className="font-bold">Telugu Meme Twist:</p>
-                <div className="space-y-0.5 text-[14px]">
-                  <p>🌶️ Ghost Pepper · Sprint 4s</p>
-                  <p>🪨 Hard Exam · Reverse 5s</p>
-                  <p>🍕 Midnight Biryani · 2X Pts</p>
+              <div className="my-auto w-full space-y-2">
+                <div className="flex items-center gap-2 border border-[#0f380f]/55 bg-[#8bac0f]/45 p-1.5 text-left">
+                  <img
+                    src={MEME_IMAGE_PATHS.ready}
+                    alt="Ready meme reaction"
+                    className="h-12 w-12 shrink-0 border border-[#0f380f] object-cover"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                  <div className="min-w-0">
+                    <span className="inline-block bg-[#0f380f] px-1 py-0.5 font-pixel text-[7px] font-bold text-[#9bbc0f]">
+                      {memeReaction.badge}
+                    </span>
+                    <p className="mt-0.5 font-lcd text-[14px] leading-tight font-bold">
+                      &ldquo;{memeReaction.dialogue}&rdquo;
+                    </p>
+                  </div>
                 </div>
-                <p className="pt-1 text-[13px] text-[#306230]">
-                  Move: Arrows / WASD / 2-4-6-8
-                </p>
+                <div className="space-y-0.5 font-lcd text-[13px] leading-tight text-[#0f380f]">
+                  <p>🌶️ Mirchi · Sprint | 🪨 Exam · Reverse</p>
+                  <p>🍗 2AM Biryani · 2X | ☕ Chai · Slow-Mo</p>
+                </div>
               </div>
             )}
 
@@ -421,22 +436,43 @@ export const NokiaScreen: React.FC<NokiaScreenProps> = ({
         {/* PAUSED OVERLAY */}
         {gameState === 'PAUSED' && (
           <div
-            className={`absolute inset-1 z-30 flex flex-col items-center justify-center gap-3 p-4 text-center ${
-              isClassic ? 'bg-white/95 text-black' : 'bg-[#9bbc0f]/92 text-[#0f380f]'
+            className={`absolute inset-1 z-30 flex flex-col items-center justify-between gap-2 p-3 text-center ${
+              isClassic ? 'bg-white/95 text-black' : 'bg-[#9bbc0f]/94 text-[#0f380f]'
             }`}
           >
             <div
-              className={`border-y-2 px-4 py-1 ${
+              className={`border-y-2 px-4 py-0.5 ${
                 isClassic ? 'border-black' : 'border-[#0f380f]'
               }`}
             >
-              <p className="font-pixel text-sm font-bold tracking-wider">
+              <p className="font-pixel text-xs font-bold tracking-wider">
                 GAME PAUSED
               </p>
             </div>
-            <p className={`font-lcd text-base ${isClassic ? 'text-black/70' : 'text-[#306230]'}`}>
-              {isClassic ? 'Game paused. Press 5 to resume.' : 'Chai break? Snake is waiting.'}
-            </p>
+
+            {isClassic ? (
+              <p className="my-auto font-lcd text-base text-black/70">
+                Game paused. Press 5 to resume.
+              </p>
+            ) : (
+              <div className="my-auto flex w-full items-center gap-2 border border-[#0f380f]/55 bg-[#8bac0f]/45 p-1.5 text-left">
+                <img
+                  src={reactionImageSrc}
+                  alt={memeReaction.badge}
+                  className="h-12 w-12 shrink-0 border border-[#0f380f] object-cover"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+                <div className="min-w-0">
+                  <span className="inline-block bg-[#0f380f] px-1 py-0.5 font-pixel text-[7px] font-bold text-[#9bbc0f]">
+                    {memeReaction.badge}
+                  </span>
+                  <p className="mt-0.5 font-lcd text-[14px] leading-tight font-bold">
+                    &ldquo;{memeReaction.dialogue}&rdquo;
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="flex w-full max-w-[210px] flex-col gap-1.5">
               <button
                 type="button"
@@ -467,42 +503,55 @@ export const NokiaScreen: React.FC<NokiaScreenProps> = ({
         {/* GAME OVER OVERLAY */}
         {gameState === 'GAME_OVER' && (
           <div
-            className={`absolute inset-1 z-30 flex flex-col items-center justify-between p-2.5 text-center ${
+            className={`absolute inset-1 z-30 flex flex-col items-center justify-between p-2 text-center ${
               isClassic ? 'bg-white/95 text-black' : 'bg-[#9bbc0f]/95 text-[#0f380f]'
             }`}
           >
             <div className="w-full">
               <div
-                className={`px-2 py-1 font-pixel text-xs font-bold tracking-wider ${
+                className={`px-2 py-0.5 font-pixel text-[11px] font-bold tracking-wider ${
                   isClassic ? 'bg-black text-white' : 'bg-[#0f380f] text-[#9bbc0f]'
                 }`}
               >
                 GAME OVER
               </div>
-              <div className="mt-1.5 flex items-center justify-center gap-3 font-pixel text-[11px] tabular-nums">
+              <div className="mt-1 flex items-center justify-center gap-3 font-pixel text-[10px] tabular-nums">
                 <span>SCORE: {score}</span>
                 <span className={isClassic ? 'text-black/70' : 'text-[#306230]'}>
                   BEST: {highScore}
                 </span>
               </div>
               {isNewHighScore && (
-                <p className="mt-0.5 font-pixel text-[9px] font-bold">
-                  {isClassic ? '* NEW HIGH SCORE *' : '* NEW RECORD, LEGEND! *'}
+                <p className="mt-0.5 font-pixel text-[8px] font-bold">
+                  {isClassic ? '* NEW HIGH SCORE *' : '* NEW RECORD ACHIEVED! *'}
                 </p>
               )}
             </div>
 
-            <div
-              className={`my-auto w-full border px-2.5 py-2 ${
-                isClassic
-                  ? 'border-black bg-white text-black'
-                  : 'border-[#0f380f]/60 bg-[#8bac0f]/45 text-[#0f380f]'
-              }`}
-            >
-              <p className="font-lcd text-[18px] font-bold leading-snug">
-                {isClassic ? 'CLASSIC RUN ENDED' : `"${gameOverQuote}"`}
-              </p>
-            </div>
+            {isClassic ? (
+              <div className="my-auto w-full border border-black bg-white px-2.5 py-2 text-black">
+                <p className="font-lcd text-[18px] font-bold leading-snug">
+                  CLASSIC RUN ENDED
+                </p>
+              </div>
+            ) : (
+              <div className="my-auto flex w-full items-center gap-2 border border-[#0f380f]/60 bg-[#8bac0f]/45 p-1.5 text-left text-[#0f380f]">
+                <img
+                  src={reactionImageSrc}
+                  alt={memeReaction.badge}
+                  className="h-14 w-14 shrink-0 border border-[#0f380f] object-cover"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+                <div className="min-w-0">
+                  <span className="inline-block bg-[#0f380f] px-1 py-0.5 font-pixel text-[7px] font-bold text-[#9bbc0f]">
+                    {memeReaction.badge}
+                  </span>
+                  <p className="mt-0.5 font-lcd text-[15px] font-bold leading-tight">
+                    &ldquo;{memeReaction.dialogue}&rdquo;
+                  </p>
+                </div>
+              </div>
+            )}
 
             <button
               type="button"
